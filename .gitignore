@@ -1,0 +1,50 @@
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+*.sqlite3
+db.sqlite3
+/static/
+media/
+*.pot
+*.pyc
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# pytest
+.cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# pyre
+.pyre/
