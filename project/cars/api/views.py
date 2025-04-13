@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from django.db import models
 from cars.models import Brand, CarModel, BodyType, Color, CarProduct, Advertisement
 from .serializers import (
     BrandSerializer, CarModelSerializer, BodyTypeSerializer,
