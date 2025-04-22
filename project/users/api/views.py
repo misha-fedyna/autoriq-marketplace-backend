@@ -2,10 +2,9 @@ from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
-from rest_framework_simplejwt.views import TokenObtainPairView
-from users.models import CustomUser, UserProfile
-from .serializers import UserSerializer, RegistrationSerializer, UserProfileSerializer
-from .permissions import IsOwnerOrReadOnly
+from users.models import CustomUser, UserProfile, Favorites
+from .serializers import UserSerializer, RegistrationSerializer, UserProfileSerializer, FavoriteSerializer
+from .permissions import IsOwnerOrReadOnly, IsOwner
 
 
 class RegistrationView(generics.CreateAPIView):
@@ -57,3 +56,14 @@ class UserViewSet(viewsets.ModelViewSet):
         user.set_password(request.data.get('new_password'))
         user.save()
         return Response({"status": "password set"}, status=status.HTTP_200_OK)
+
+
+class FavoriteViewSet(viewsets.ModelViewSet):
+    serializer_class = FavoriteSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+    
+    def get_queryset(self):
+        return Favorites.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

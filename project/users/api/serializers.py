@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from users.models import CustomUser, UserProfile
+from users.models import CustomUser, UserProfile, Favorites
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -53,3 +53,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         
         return user
 
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorites
+        fields = ['id', 'advertisement', 'created_at']
+        read_only_fields = ['created_at']

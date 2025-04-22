@@ -1,5 +1,9 @@
 # Django Project Setup Guide
 
+Dev branch
+
+Change file comments (add explainatoin and check else staff)
+=======
 ## Installation Steps
 
 ### 1. Clone the Repository
