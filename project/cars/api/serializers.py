@@ -96,21 +96,24 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
 class AdvertisementCreateSerializer(serializers.ModelSerializer):
     car_product = CarProductDetailSerializer()
+    brand_id = serializers.IntegerField(write_only=True)  # Для вибору бренду
     
     class Meta:
         model = Advertisement
-        fields = ['id', 'title', 'description', 'car_product']
+        fields = ['id', 'title', 'description', 'car_product', 'brand_id']
     
     def create(self, validated_data):
+        brand_id = validated_data.pop('brand_id', None)
         car_product_data = validated_data.pop('car_product')
         
         # Create the car product
         car_product = CarProduct.objects.create(**car_product_data)
         
-        # Create the advertisement
+        # Create the advertisement with active status
         advertisement = Advertisement.objects.create(
             car_product=car_product,
             user=self.context['request'].user,
+            is_active=True,  # Активувати одразу
             **validated_data
         )
         

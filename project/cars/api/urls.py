@@ -16,4 +16,3 @@ router.register(r'advertisements', AdvertisementViewSet)
 urlpatterns = [
     path('', include(router.urls)),
 ]
-
