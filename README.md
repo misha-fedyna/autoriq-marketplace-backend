@@ -56,6 +56,7 @@ source venv/bin/activate  # На Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 4. Налаштуйте базу даних у settings.py:
+```
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -66,6 +67,7 @@ DATABASES = {
         'PORT': '5432'
     }
 }
+```
 
 5. Виконайте міграції:
 python manage.py migrate
@@ -126,7 +128,7 @@ GET /api/cars/advertisements/?min_price=10000&max_price=20000&min_year=2018&bran
 
 Для створення оголошення використовуйте POST-запит:
 POST /api/cars/advertisements/
-
+```
 {
   "title": "Продаю BMW X5 2020",
   "description": "Відмінний стан, повна комплектація",
@@ -139,7 +141,7 @@ POST /api/cars/advertisements/
     "mileage": 15000
   }
 }
-
+```
 ## Дозволи (Permissions)
 
 - IsOwnerOrReadOnly - дозволяє редагувати тільки власнику об'єкта
