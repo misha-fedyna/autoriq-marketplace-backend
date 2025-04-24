@@ -68,7 +68,6 @@ DATABASES = {
     }
 }
 ```
-
 5. Виконайте міграції:
 python manage.py migrate
 
