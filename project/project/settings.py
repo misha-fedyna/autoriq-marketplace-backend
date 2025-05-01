@@ -45,9 +45,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -178,5 +180,22 @@ SIMPLE_JWT = {
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+
+    # Важливо для роботи з веб-клієнтами
+    'AUTH_COOKIE': 'access_token',  # Ім'я cookie для токену
+    'AUTH_COOKIE_SECURE': False,    # В продакшені встановити True
+    'AUTH_COOKIE_HTTP_ONLY': True,
+    'AUTH_COOKIE_SAMESITE': 'Lax',  # Для продакшену використовувати 'None' з SECURE=True
 }
 
+
+# Для розробки дозволяємо всі домени
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Для продакшену, потрібно вказати конкретні домени
+# CORS_ALLOWED_ORIGINS = [
+#     "https://yourdomain.com",
+# ]
+
+# Дозволяємо передавати credentials (cookies, authorization headers)
+CORS_ALLOW_CREDENTIALS = True
