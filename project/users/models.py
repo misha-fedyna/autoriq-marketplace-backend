@@ -12,6 +12,9 @@ class CustomUser(AbstractUser):
     is_superuser = models.BooleanField(default=False)
     last_login = models.DateTimeField(null=True, blank=True)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'phone'] 
+
     def __str__(self):
         return self.email
 

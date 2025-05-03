@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from users.models import CustomUser, UserProfile, Favorites
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
+from djoser.serializers import UserSerializer as BaseUserSerializer
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -17,41 +19,32 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_active']
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for creating user accounts"""
+class CustomUserCreateSerializer(BaseUserCreateSerializer):
     profile = UserProfileSerializer()
-    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-    password2 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     
-    class Meta:
+    class Meta(BaseUserCreateSerializer.Meta):
         model = CustomUser
-        fields = ['id', 'email', 'username', 'phone', 'password', 'password2', 'profile']
-        
-    def validate(self, attrs):
-        # Check if passwords match
-        if attrs['password'] != attrs.pop('password2'):
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
-        return attrs
+        fields = ['id', 'email', 'username', 'phone', 'password', 'profile']
     
     def create(self, validated_data):
-        # Extract profile data
         profile_data = validated_data.pop('profile')
+        user = CustomUser.objects.create_user(**validated_data)
         
-        # Create the user
-        user = CustomUser.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            phone=validated_data['phone'],
-            password=validated_data['password']
-        )
-        
-        # Create the user profile
         UserProfile.objects.create(
             user=user,
             **profile_data
         )
         
         return user
+
+
+class CustomUserSerializer(BaseUserSerializer):
+    profile = UserProfileSerializer(read_only=True)
+    
+    class Meta(BaseUserSerializer.Meta):
+        model = CustomUser
+        fields = ['id', 'email', 'username', 'phone', 'profile', 'is_active']
+        read_only_fields = ['is_active']
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
