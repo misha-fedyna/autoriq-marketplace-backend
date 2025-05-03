@@ -1,25 +1,10 @@
-from rest_framework import status, generics, viewsets
+from rest_framework import status, viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from users.models import CustomUser, UserProfile, Favorites
-from .serializers import UserSerializer, RegistrationSerializer, UserProfileSerializer, FavoriteSerializer
+from users.models import CustomUser, Favorites
+from .serializers import UserSerializer, FavoriteSerializer
 from .permissions import IsOwnerOrReadOnly, IsOwner
-
-
-class RegistrationView(generics.CreateAPIView):
-    serializer_class = RegistrationSerializer
-    permission_classes = [AllowAny]
-    
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
-        return Response({
-            "message": "User registered successfully",
-            "user_id": user.id
-        }, status=status.HTTP_201_CREATED)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -45,17 +30,6 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    
-    @action(detail=False, methods=['post'])
-    def change_password(self, request):
-        user = request.user
-        if not user.check_password(request.data.get('old_password')):
-            return Response({"old_password": ["Wrong password."]}, 
-                            status=status.HTTP_400_BAD_REQUEST)
-                            
-        user.set_password(request.data.get('new_password'))
-        user.save()
-        return Response({"status": "password set"}, status=status.HTTP_200_OK)
 
 
 class FavoriteViewSet(viewsets.ModelViewSet):

@@ -106,14 +106,12 @@ class AdvertisementCreateSerializer(serializers.ModelSerializer):
         brand_id = validated_data.pop('brand_id', None)
         car_product_data = validated_data.pop('car_product')
         
-        # Create the car product
         car_product = CarProduct.objects.create(**car_product_data)
         
-        # Create the advertisement with active status
         advertisement = Advertisement.objects.create(
             car_product=car_product,
             user=self.context['request'].user,
-            is_active=True,  # Активувати одразу
+            is_active=True,  
             **validated_data
         )
         
