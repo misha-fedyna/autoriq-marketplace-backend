@@ -1,118 +1,100 @@
 from rest_framework import serializers
-from cars.models import Brand, CarModel, BodyType, Color, CarProduct, Advertisement
+from cars.models import Advertisement, AdvertisementPhoto  # Виправлений імпорт
 from users.api.serializers import UserSerializer
 
-
-class BrandSerializer(serializers.ModelSerializer):
+class AdvertisementPhotoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Brand
-        fields = ['id', 'brand_name', 'description', 'founded_year']
+        model = AdvertisementPhoto
+        fields = ['id', 'photo', 'order']
 
-
-class CarModelSerializer(serializers.ModelSerializer):
-    brand = BrandSerializer(read_only=True)
-    brand_id = serializers.PrimaryKeyRelatedField(
-        queryset=Brand.objects.all(),
-        source='brand',
-        write_only=True
-    )
-    
+# Серіалізатор для короткого відображення оголошення в списку
+class AdvertisementListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CarModel
-        fields = ['id', 'model_name', 'brand', 'brand_id']
-
-
-class BodyTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BodyType
-        fields = ['id', 'body_type_name']
-
-
-class ColorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Color
-        fields = ['id', 'name', 'hex_code']
-
-
-class CarProductSerializer(serializers.ModelSerializer):
-    model = serializers.StringRelatedField(read_only=True)
-    body_type = serializers.StringRelatedField(read_only=True)
-    color = serializers.StringRelatedField(read_only=True)
-    
-    class Meta:
-        model = CarProduct
+        model = Advertisement
         fields = [
-            'id', 'model', 'body_type', 'year', 
-            'price', 'color', 'mileage', 
-            'created_at', 'updated_at'
+            'id', 'title', 'brand', 'model_name', 'year', 
+            'price', 'mileage', 'city', 'main_photo', 
+            'created_at', 'is_active'
         ]
-        read_only_fields = ['created_at', 'updated_at']
 
-
-class CarProductDetailSerializer(serializers.ModelSerializer):
-    model = CarModelSerializer(read_only=True)
-    model_id = serializers.PrimaryKeyRelatedField(
-        queryset=CarModel.objects.all(),
-        source='model',
-        write_only=True
-    )
-    body_type = BodyTypeSerializer(read_only=True)
-    body_type_id = serializers.PrimaryKeyRelatedField(
-        queryset=BodyType.objects.all(),
-        source='body_type',
-        write_only=True
-    )
-    color = ColorSerializer(read_only=True)
-    color_id = serializers.PrimaryKeyRelatedField(
-        queryset=Color.objects.all(),
-        source='color',
-        required=False,
-        allow_null=True,
-        write_only=True
-    )
-    
-    class Meta:
-        model = CarProduct
-        fields = [
-            'id', 'model', 'model_id', 'body_type', 'body_type_id',
-            'year', 'price', 'color', 'color_id', 'mileage',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
-
-
-class AdvertisementSerializer(serializers.ModelSerializer):
-    car_product = CarProductSerializer(read_only=True)
+# Серіалізатор для детального відображення оголошення
+class AdvertisementDetailSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    photos = AdvertisementPhotoSerializer(many=True, read_only=True)
+    body_type_display = serializers.CharField(source='get_body_type_display', read_only=True)
+    drive_type_display = serializers.CharField(source='get_drive_type_display', read_only=True)
+    transmission_display = serializers.CharField(source='get_transmission_display', read_only=True)
+    color_display = serializers.CharField(source='get_color_display', read_only=True)
     
     class Meta:
         model = Advertisement
         fields = [
-            'id', 'title', 'description', 'car_product', 
-            'user', 'created_at', 'updated_at', 'is_active'
+            'id', 'user', 'title', 'description', 'price',
+            'brand', 'model_name', 'year', 'body_type', 'body_type_display',
+            'drive_type', 'drive_type_display', 'power', 
+            'transmission', 'transmission_display', 'color', 'color_display',
+            'mileage', 'door_count', 'had_accidents', 'vin_code', 
+            'city', 'main_photo', 'photos',
+            'created_at', 'updated_at', 'is_active'
         ]
         read_only_fields = ['created_at', 'updated_at', 'user']
 
-
-class AdvertisementCreateSerializer(serializers.ModelSerializer):
-    car_product = CarProductDetailSerializer()
-    brand_id = serializers.IntegerField(write_only=True)  # Для вибору бренду
+# Серіалізатор для створення нового оголошення
+class AdvertisementCreateUpdateSerializer(serializers.ModelSerializer):
+    uploaded_photos = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=False
+    )
     
     class Meta:
         model = Advertisement
-        fields = ['id', 'title', 'description', 'car_product', 'brand_id']
+        fields = [
+            'title', 'description', 'price',
+            'brand', 'model_name', 'year', 'body_type',
+            'drive_type', 'power', 'transmission', 'color',
+            'mileage', 'door_count', 'had_accidents', 'vin_code', 
+            'city', 'main_photo', 'uploaded_photos'
+        ]
     
     def create(self, validated_data):
-        brand_id = validated_data.pop('brand_id', None)
-        car_product_data = validated_data.pop('car_product')
+        uploaded_photos = validated_data.pop('uploaded_photos', [])
         
-        car_product = CarProduct.objects.create(**car_product_data)
-        
+        # Створюємо основне оголошення
         advertisement = Advertisement.objects.create(
-            car_product=car_product,
             user=self.context['request'].user,
-            is_active=True,  
             **validated_data
         )
         
+        # Зберігаємо додаткові фотографії
+        for i, photo in enumerate(uploaded_photos):
+            AdvertisementPhoto.objects.create(
+                advertisement=advertisement,
+                photo=photo,
+                order=i+1
+            )
+        
         return advertisement
+    
+    def update(self, instance, validated_data):
+        uploaded_photos = validated_data.pop('uploaded_photos', [])
+        
+        # Оновлюємо поля оголошення
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Якщо є нові фотографії, додаємо їх
+        if uploaded_photos:
+            # Визначаємо наступний порядковий номер
+            last_order = instance.photos.order_by('-order').first()
+            next_order = 1 if not last_order else last_order.order + 1
+            
+            for i, photo in enumerate(uploaded_photos):
+                AdvertisementPhoto.objects.create(
+                    advertisement=instance,
+                    photo=photo,
+                    order=next_order + i
+                )
+        
+        return instance

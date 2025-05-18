@@ -8,5 +8,4 @@ urlpatterns = [
     path('', include(router.urls)),
     path('users/', include('users.api.urls')),
     path('cars/', include('cars.api.urls')),
-    path('reviews/', include('reviews.api.urls')),
 ]

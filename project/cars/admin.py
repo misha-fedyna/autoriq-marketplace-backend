@@ -1,35 +1,57 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Brand, CarModel, BodyType, Color, CarProduct, Advertisement
+from .models import Advertisement, AdvertisementPhoto
 
-class CarModelAdmin(admin.ModelAdmin):
-    list_display = ['model_name', 'brand']
-    list_filter = ['brand']
-    search_fields = ['model_name', 'brand__brand_name']
-
-class CarProductAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'model', 'body_type', 'year', 'price', 'color', 'mileage']
-    list_filter = ['model__brand', 'body_type', 'year', 'color']
-    search_fields = ['model__model_name', 'model__brand__brand_name']
+class AdvertisementPhotoInline(admin.TabularInline):
+    model = AdvertisementPhoto
+    extra = 1
+    fields = ['photo', 'order']
+    readonly_fields = ['photo_preview']
     
+    def photo_preview(self, obj):
+        if obj.photo:
+            return format_html('<img src="{}" width="100" />', obj.photo.url)
+        return '-'
+    photo_preview.short_description = 'Перегляд'
+
 class AdvertisementAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'get_car_info', 'created_at', 'is_active']
-    list_filter = ['is_active', 'created_at', 'car_product__model__brand']
-    search_fields = ['title', 'description', 'user__email', 'car_product__model__model_name']
-    readonly_fields = ['created_at', 'updated_at']
+    list_display = ['title', 'user', 'car_info', 'city', 'created_at', 'is_active']
+    list_filter = ['is_active', 'created_at', 'brand', 'body_type', 'transmission', 'color', 'had_accidents']
+    search_fields = ['title', 'description', 'user__email', 'brand', 'model_name', 'city', 'vin_code']
+    readonly_fields = ['created_at', 'updated_at', 'photo_preview']
+    inlines = [AdvertisementPhotoInline]
+    
+    fieldsets = (
+        ('Основна інформація', {
+            'fields': ('user', 'title', 'description', 'price', 'city', 'main_photo', 'photo_preview')
+        }),
+        ('Інформація про автомобіль', {
+            'fields': ('brand', 'model_name', 'year', 'body_type', 'drive_type', 
+                      'power', 'transmission', 'color', 'mileage', 'door_count', 
+                      'had_accidents', 'vin_code')
+        }),
+        ('Статус', {
+            'fields': ('is_active', 'deleted_at', 'created_at', 'updated_at')
+        }),
+    )
     
     # Для форматування інформації про автомобіль
-    def get_car_info(self, obj):
-        if obj.car_product:
-            return format_html(
-                '{} - {} | {}₴ | {} км',
-                obj.car_product.model,
-                obj.car_product.year,
-                obj.car_product.price,
-                obj.car_product.mileage
-            )
-        return '-'
-    get_car_info.short_description = 'Автомобіль'
+    def car_info(self, obj):
+        return format_html(
+            '{} {} - {} | {}₴ | {} км',
+            obj.brand,
+            obj.model_name,
+            obj.year,
+            obj.price,
+            obj.mileage
+        )
+    car_info.short_description = 'Автомобіль'
+    
+    def photo_preview(self, obj):
+        if obj.main_photo:
+            return format_html('<img src="{}" width="300" />', obj.main_photo.url)
+        return 'Немає фото'
+    photo_preview.short_description = 'Фото'
     
     # Автоматичне встановлення користувача при створенні
     def save_model(self, request, obj, form, change):
@@ -44,28 +66,4 @@ class AdvertisementAdmin(admin.ModelAdmin):
             return qs
         return qs.filter(user=request.user)
 
-class BrandAdmin(admin.ModelAdmin):
-    list_display = ['brand_name', 'founded_year']
-    search_fields = ['brand_name']
-
-class BodyTypeAdmin(admin.ModelAdmin):
-    list_display = ['body_type_name']
-
-class ColorAdmin(admin.ModelAdmin):
-    list_display = ['name', 'color_display', 'hex_code']
-    
-    # Красиве відображення кольору
-    def color_display(self, obj):
-        return format_html(
-            '<div style="width:20px;height:20px;background-color:{};border:1px solid #ddd;"></div>',
-            obj.hex_code
-        )
-    color_display.short_description = 'Відображення'
-
-# Реєстрація моделей в адмін-панелі
-admin.site.register(Brand, BrandAdmin)
-admin.site.register(CarModel, CarModelAdmin)
-admin.site.register(BodyType, BodyTypeAdmin)
-admin.site.register(Color, ColorAdmin)
-admin.site.register(CarProduct, CarProductAdmin)
 admin.site.register(Advertisement, AdvertisementAdmin)
