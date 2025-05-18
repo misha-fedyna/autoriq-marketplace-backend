@@ -4,79 +4,30 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db import models
-from cars.models import Brand, CarModel, BodyType, Color, CarProduct, Advertisement
-from .serializers import (
-    BrandSerializer, CarModelSerializer, BodyTypeSerializer,
-    ColorSerializer, CarProductSerializer, CarProductDetailSerializer,
-    AdvertisementSerializer, AdvertisementCreateSerializer
-)
-from .filters import CarProductFilter, AdvertisementFilter
-from users.api.permissions import IsOwnerOrReadOnly
-from users.models import Favorites
-
-
-class BrandViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Brand.objects.all()
-    serializer_class = BrandSerializer
-    permission_classes = [permissions.AllowAny]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['brand_name']
-    ordering_fields = ['brand_name']
-
-
-class CarModelViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = CarModel.objects.all()
-    serializer_class = CarModelSerializer
-    permission_classes = [permissions.AllowAny]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['brand']
-    search_fields = ['model_name']
-
-
-class BodyTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = BodyType.objects.all()
-    serializer_class = BodyTypeSerializer
-    permission_classes = [permissions.AllowAny]
-
-
-class ColorViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Color.objects.all()
-    serializer_class = ColorSerializer
-    permission_classes = [permissions.AllowAny]
-
-
-class CarProductViewSet(viewsets.ModelViewSet):
-    queryset = CarProduct.objects.all()
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_class = CarProductFilter
-    ordering_fields = ['price', 'year', 'mileage']
-    
-    def get_serializer_class(self):
-        if self.action in ['retrieve', 'create', 'update', 'partial_update']:
-            return CarProductDetailSerializer
-        return CarProductSerializer
 
 
 class AdvertisementViewSet(viewsets.ModelViewSet):
     queryset = Advertisement.objects.filter(is_active=True, deleted_at=None)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = AdvertisementFilter
-    search_fields = ['title', 'description']
-    ordering_fields = ['created_at', 'car_product__price']
+    search_fields = ['title', 'description', 'model_name', 'brand', 'city']
+    ordering_fields = ['created_at', 'price', 'year', 'mileage']
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser]
     
     def get_serializer_class(self):
-        if self.action == 'create':
-            return AdvertisementCreateSerializer
-        return AdvertisementSerializer
+        if self.action in ['create', 'update', 'partial_update']:
+            return AdvertisementCreateUpdateSerializer
+        elif self.action == 'retrieve':
+            return AdvertisementDetailSerializer
+        return AdvertisementListSerializer
     
     def get_queryset(self):
-        # For listing, only show active ads
+        # Для публічного списку, показуємо тільки активні оголошення
         if self.action == 'list':
             return Advertisement.objects.filter(is_active=True, deleted_at=None)
         
-        # For other actions, users should be able to see their own inactive/deleted ads
+        # Для власника, показуємо всі його оголошення (включаючи неактивні)
         user = self.request.user
         if user.is_authenticated:
             return Advertisement.objects.filter(
@@ -124,3 +75,42 @@ class AdvertisementViewSet(viewsets.ModelViewSet):
         advertisement.is_active = False
         advertisement.save()
         return Response({"status": "advertisement deleted"})
+
+class AdvertisementPhotoViewSet(viewsets.ModelViewSet):
+    queryset = AdvertisementPhoto.objects.all()
+    serializer_class = AdvertisementPhotoSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get_queryset(self):
+        return AdvertisementPhoto.objects.filter(advertisement__user=self.request.user)
+    
+    def perform_create(self, serializer):
+        advertisement_id = self.request.data.get('advertisement')
+        advertisement = Advertisement.objects.get(id=advertisement_id)
+        
+        if advertisement.user != self.request.user:
+            raise permissions.PermissionDenied("You don't have permission to add photos to this advertisement.")
+        
+        # Визначаємо наступний порядковий номер
+        order = AdvertisementPhoto.objects.filter(advertisement=advertisement).count() + 1
+        
+        serializer.save(advertisement=advertisement, order=order)
+        
+    @action(detail=True, methods=['post'])
+    def change_order(self, request, pk=None):
+        photo = self.get_object()
+        new_order = request.data.get('order')
+        
+        if new_order is None:
+            return Response({"error": "Order parameter is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            new_order = int(new_order)
+        except ValueError:
+            return Response({"error": "Order must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        photo.order = new_order
+        photo.save()
+        
+        return Response({"status": "order updated"})
