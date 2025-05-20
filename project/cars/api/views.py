@@ -4,6 +4,17 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db import models
+from cars.models import Advertisement, AdvertisementPhoto  # Додано імпорт моделей
+from .serializers import (  # Додано імпорт серіалізаторів
+    AdvertisementListSerializer, 
+    AdvertisementDetailSerializer,
+    AdvertisementCreateUpdateSerializer, 
+    AdvertisementPhotoSerializer
+)
+from .filters import AdvertisementFilter  # Додано імпорт фільтрів
+from users.api.permissions import IsOwnerOrReadOnly  # Додано імпорт дозволів
+from users.models import Favorites  # Додано імпорт моделі Favorites
+from rest_framework.parsers import MultiPartParser, FormParser  # Додано імпорт парсерів
 
 
 class AdvertisementViewSet(viewsets.ModelViewSet):
