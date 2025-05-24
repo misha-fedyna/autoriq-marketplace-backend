@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
-from cloudinary.models import CloudinaryField
 from users.models import CustomUser
 
 class Advertisement(models.Model):
@@ -46,6 +45,15 @@ class Advertisement(models.Model):
         ('beige', 'Бежевий'),
     ]
     
+    FUEL_TYPE_CHOICES = [
+        ('petrol', 'Бензин'),
+        ('diesel', 'Дизель'),
+        ('gas', 'Газ'),
+        ('hybrid', 'Гібрид'),
+        ('electric', 'Електро'),
+        ('gas_petrol', 'Газ/Бензин'),
+    ]
+    
     # Базова інформація про оголошення
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="advertisements")
     title = models.CharField(max_length=150)
@@ -70,8 +78,17 @@ class Advertisement(models.Model):
     had_accidents = models.BooleanField(default=False, help_text="Чи була машина в ДТП")
     vin_code = models.CharField(max_length=17, blank=True, null=True)
     
+    # Нові поля для типу палива та об'єму двигуна
+    fuel_type = models.CharField(max_length=20, choices=FUEL_TYPE_CHOICES)
+    engine_capacity = models.DecimalField(
+        max_digits=3, 
+        decimal_places=1, 
+        help_text="Об'єм двигуна в літрах",
+        validators=[MinValueValidator(0.1), MaxValueValidator(9.9)]
+    )
+    
     # Основна фотографія
-    main_photo = CloudinaryField('main_photo', blank=True, null=True)
+    main_photo = models.ImageField(upload_to='advertisements/main_photos/', blank=True, null=True)
     
     # Службова інформація
     created_at = models.DateTimeField(auto_now_add=True)
@@ -86,18 +103,20 @@ class Advertisement(models.Model):
             models.Index(fields=['brand', 'price']),
             models.Index(fields=['year', 'price']),
             models.Index(fields=['city', 'is_active']),
+            models.Index(fields=['fuel_type', 'engine_capacity']),  # Додаємо новий індекс
         ]
     
     def __str__(self):
-        return f"{self.brand} {self.model_name} ({self.year}) - {self.price}₴"
+        return f"{self.brand} {self.model_name} ({self.year}) - {self.fuel_type} {self.engine_capacity}л - {self.price}₴"
+
 
 class AdvertisementPhoto(models.Model):
     advertisement = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name="photos")
-    photo = CloudinaryField('photo')
+    photo = models.ImageField(upload_to='advertisements/photos/')
     order = models.PositiveSmallIntegerField(default=0)
     
     class Meta:
         ordering = ['order']
     
     def __str__(self):
-        return f"Фото {self.order} для {self.advertisement}"
+        return f"Фото {self.order} для {self.advertisement}"        

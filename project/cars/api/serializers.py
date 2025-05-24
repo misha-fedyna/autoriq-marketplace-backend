@@ -9,11 +9,14 @@ class AdvertisementPhotoSerializer(serializers.ModelSerializer):
 
 # Серіалізатор для короткого відображення оголошення в списку
 class AdvertisementListSerializer(serializers.ModelSerializer):
+    fuel_type_display = serializers.CharField(source='get_fuel_type_display', read_only=True)
+    
     class Meta:
         model = Advertisement
         fields = [
             'id', 'title', 'brand', 'model_name', 'year', 
             'price', 'mileage', 'city', 'main_photo', 
+            'fuel_type', 'fuel_type_display', 'engine_capacity',
             'created_at', 'is_active'
         ]
 
@@ -25,6 +28,7 @@ class AdvertisementDetailSerializer(serializers.ModelSerializer):
     drive_type_display = serializers.CharField(source='get_drive_type_display', read_only=True)
     transmission_display = serializers.CharField(source='get_transmission_display', read_only=True)
     color_display = serializers.CharField(source='get_color_display', read_only=True)
+    fuel_type_display = serializers.CharField(source='get_fuel_type_display', read_only=True)
     
     class Meta:
         model = Advertisement
@@ -34,6 +38,7 @@ class AdvertisementDetailSerializer(serializers.ModelSerializer):
             'drive_type', 'drive_type_display', 'power', 
             'transmission', 'transmission_display', 'color', 'color_display',
             'mileage', 'door_count', 'had_accidents', 'vin_code', 
+            'fuel_type', 'fuel_type_display', 'engine_capacity',
             'city', 'main_photo', 'photos',
             'created_at', 'updated_at', 'is_active'
         ]
@@ -54,18 +59,18 @@ class AdvertisementCreateUpdateSerializer(serializers.ModelSerializer):
             'brand', 'model_name', 'year', 'body_type',
             'drive_type', 'power', 'transmission', 'color',
             'mileage', 'door_count', 'had_accidents', 'vin_code', 
+            'fuel_type', 'engine_capacity',
             'city', 'main_photo', 'uploaded_photos'
         ]
     
     def create(self, validated_data):
         uploaded_photos = validated_data.pop('uploaded_photos', [])
+        validated_data.pop('user', None)  # Додана ця лінія
         
-        # Створюємо основне оголошення
         advertisement = Advertisement.objects.create(
             user=self.context['request'].user,
             **validated_data
         )
-        
         # Зберігаємо додаткові фотографії
         for i, photo in enumerate(uploaded_photos):
             AdvertisementPhoto.objects.create(

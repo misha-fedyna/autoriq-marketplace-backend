@@ -15,9 +15,15 @@ class AdvertisementPhotoInline(admin.TabularInline):
     photo_preview.short_description = 'Перегляд'
 
 class AdvertisementAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'car_info', 'city', 'created_at', 'is_active']
-    list_filter = ['is_active', 'created_at', 'brand', 'body_type', 'transmission', 'color', 'had_accidents']
-    search_fields = ['title', 'description', 'user__email', 'brand', 'model_name', 'city', 'vin_code']
+    list_display = ['title', 'user', 'car_info', 'engine_info', 'city', 'created_at', 'is_active']
+    list_filter = [
+        'is_active', 'created_at', 'brand', 'body_type', 
+        'transmission', 'color', 'had_accidents', 'fuel_type'
+    ]
+    search_fields = [
+        'title', 'description', 'user__email', 
+        'brand', 'model_name', 'city', 'vin_code'
+    ]
     readonly_fields = ['created_at', 'updated_at', 'photo_preview']
     inlines = [AdvertisementPhotoInline]
     
@@ -26,9 +32,13 @@ class AdvertisementAdmin(admin.ModelAdmin):
             'fields': ('user', 'title', 'description', 'price', 'city', 'main_photo', 'photo_preview')
         }),
         ('Інформація про автомобіль', {
-            'fields': ('brand', 'model_name', 'year', 'body_type', 'drive_type', 
-                      'power', 'transmission', 'color', 'mileage', 'door_count', 
-                      'had_accidents', 'vin_code')
+            'fields': ('brand', 'model_name', 'year', 'body_type')
+        }),
+        ('Двигун і характеристики', {
+            'fields': ('power', 'fuel_type', 'engine_capacity', 'drive_type')
+        }),
+        ('Додаткові характеристики', {
+            'fields': ('transmission', 'color', 'mileage', 'door_count', 'had_accidents', 'vin_code')
         }),
         ('Статус', {
             'fields': ('is_active', 'deleted_at', 'created_at', 'updated_at')
@@ -38,14 +48,25 @@ class AdvertisementAdmin(admin.ModelAdmin):
     # Для форматування інформації про автомобіль
     def car_info(self, obj):
         return format_html(
-            '{} {} - {} | {}₴ | {} км',
+            '{} {} - {} | {}₴',
             obj.brand,
             obj.model_name,
             obj.year,
-            obj.price,
-            obj.mileage
+            obj.price
         )
     car_info.short_description = 'Автомобіль'
+    
+    # Для форматування інформації про двигун і пробіг
+    def engine_info(self, obj):
+        fuel_type = obj.get_fuel_type_display()
+        return format_html(
+            '{} {}л | {} | {} км',
+            fuel_type,
+            obj.engine_capacity,
+            obj.get_transmission_display(),
+            obj.mileage
+        )
+    engine_info.short_description = 'Двигун і пробіг'
     
     def photo_preview(self, obj):
         if obj.main_photo:

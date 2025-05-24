@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 from django.db import models
-from cars.models import Advertisement  # Виправлений імпорт
+from cars.models import Advertisement
 
 class AdvertisementFilter(filters.FilterSet):
     """
@@ -15,6 +15,10 @@ class AdvertisementFilter(filters.FilterSet):
     min_power = filters.NumberFilter(field_name="power", lookup_expr='gte')
     max_power = filters.NumberFilter(field_name="power", lookup_expr='lte')
     
+    # Додаємо фільтри для об'єму двигуна
+    min_engine_capacity = filters.NumberFilter(field_name="engine_capacity", lookup_expr='gte')
+    max_engine_capacity = filters.NumberFilter(field_name="engine_capacity", lookup_expr='lte')
+    
     # Фільтри за текстовими полями
     brand = filters.CharFilter(field_name="brand", lookup_expr='icontains')
     model = filters.CharFilter(field_name="model_name", lookup_expr='icontains')
@@ -25,6 +29,7 @@ class AdvertisementFilter(filters.FilterSet):
     drive_type = filters.CharFilter(field_name="drive_type")
     transmission = filters.CharFilter(field_name="transmission")
     color = filters.CharFilter(field_name="color")
+    fuel_type = filters.CharFilter(field_name="fuel_type")  # Додаємо фільтр для типу палива
     
     # Інші фільтри
     door_count = filters.NumberFilter(field_name="door_count")
@@ -38,7 +43,7 @@ class AdvertisementFilter(filters.FilterSet):
         fields = [
             'brand', 'model_name', 'year', 'body_type', 'drive_type',
             'transmission', 'color', 'mileage', 'door_count', 
-            'had_accidents', 'city', 'is_active'
+            'had_accidents', 'city', 'is_active', 'fuel_type', 'engine_capacity'
         ]
     
     def search_filter(self, queryset, name, value):
