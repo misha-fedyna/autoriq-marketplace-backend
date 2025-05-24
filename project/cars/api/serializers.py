@@ -65,13 +65,12 @@ class AdvertisementCreateUpdateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         uploaded_photos = validated_data.pop('uploaded_photos', [])
+        validated_data.pop('user', None)  # Додана ця лінія
         
-        # Створюємо основне оголошення
         advertisement = Advertisement.objects.create(
             user=self.context['request'].user,
             **validated_data
         )
-        
         # Зберігаємо додаткові фотографії
         for i, photo in enumerate(uploaded_photos):
             AdvertisementPhoto.objects.create(
