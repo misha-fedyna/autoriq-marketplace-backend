@@ -4,7 +4,6 @@ from os import path
 from pathlib import Path
 from django.core.management.utils import get_random_secret_key
 import dotenv
-import cloudinary_storage
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,8 +45,6 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'djoser',
-    'cloudinary_storage',
-    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -89,7 +86,7 @@ WSGI_APPLICATION = 'project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'testServer',
+        'NAME': 'testServer1',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
@@ -136,20 +133,13 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dbza5zuqp',
-    'API_KEY': '816429145373536',
-    'API_SECRET': 'r5IZ5ayKydzOhQFbO1HsExkT1MU',
-}
-
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
 REST_FRAMEWORK = {
