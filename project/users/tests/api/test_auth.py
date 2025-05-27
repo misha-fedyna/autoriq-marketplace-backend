@@ -51,19 +51,3 @@ def test_jwt_verify(api_client, test_user):
         "token": token
     })
     assert response.status_code == 200
-
-
-# def test_user_details(api_client, test_user):
-#     # Login first
-#     login_response = api_client.post(reverse('jwt-create'), {
-#         "email": test_user.email,
-#         "password": "testpass123"
-#     })
-#     token = login_response.data['access']
-    
-#     # Get user details with authentication
-#     api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
-#     response = api_client.get(reverse('users-me'))
-    
-#     assert response.status_code == 200
-#     assert response.data['email'] == test_user.email
