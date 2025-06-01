@@ -6,14 +6,15 @@ from django.conf import settings
 class CustomUser(AbstractUser):
     """ All information about user for authentication """
     email = models.EmailField(unique=True, null=False, blank=False)
-    phone = models.CharField(max_length=20, unique=True, null=False, blank=False)
+    phone = models.CharField(
+        max_length=20, unique=True, null=False, blank=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     last_login = models.DateTimeField(null=True, blank=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'phone'] 
+    REQUIRED_FIELDS = ['username', 'phone']
 
     def __str__(self):
         return self.email
@@ -104,4 +105,3 @@ class Notifications(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Notification'
         verbose_name_plural = 'Notifications'
-

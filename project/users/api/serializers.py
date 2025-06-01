@@ -12,7 +12,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
-    
+
     class Meta:
         model = CustomUser
         fields = ['id', 'email', 'username', 'phone', 'profile', 'is_active']
@@ -21,26 +21,26 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CustomUserCreateSerializer(BaseUserCreateSerializer):
     profile = UserProfileSerializer()
-    
+
     class Meta(BaseUserCreateSerializer.Meta):
         model = CustomUser
         fields = ['id', 'email', 'username', 'phone', 'password', 'profile']
-    
+
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
         user = CustomUser.objects.create_user(**validated_data)
-        
+
         UserProfile.objects.create(
             user=user,
             **profile_data
         )
-        
+
         return user
 
 
 class CustomUserSerializer(BaseUserSerializer):
     profile = UserProfileSerializer(read_only=True)
-    
+
     class Meta(BaseUserSerializer.Meta):
         model = CustomUser
         fields = ['id', 'email', 'username', 'phone', 'profile', 'is_active']
