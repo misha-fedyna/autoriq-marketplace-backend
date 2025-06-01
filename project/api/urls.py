@@ -1,7 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-# Create a router for all API endpoints
 router = DefaultRouter()
 
 urlpatterns = [

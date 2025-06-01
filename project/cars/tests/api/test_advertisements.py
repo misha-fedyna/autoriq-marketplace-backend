@@ -1,4 +1,3 @@
-# cars/tests/api/test_advertisements.py
 import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -13,7 +12,7 @@ def api_client():
 def test_user():
     return CustomUser.objects.create_user(
         email="test@user.com",
-        username="testuser",  # Додано username
+        username="testuser",  
         phone="+380991112233",
         password="testpass123"
     )
@@ -60,8 +59,8 @@ def test_create_advertisement(api_client, test_user):
         "color": "white",
         "mileage": 0,
         "door_count": 5,
-        "had_accidents": False,  # Додано обов'язкове поле
-        "vin_code": "ABC123",    # Додано обов'язкове поле
+        "had_accidents": False,  
+        "vin_code": "ABC123",
         "fuel_type": "petrol",
         "engine_capacity": 3.0
     }
@@ -72,14 +71,13 @@ def test_create_advertisement(api_client, test_user):
         format="json"
     )
     
-    print(response.data)  # Для дебагінгу
+    print(response.data)
     assert response.status_code == 415
 
 @pytest.mark.django_db
 def test_deactivate_advertisement(api_client, test_user, test_advertisement):
     api_client.force_authenticate(user=test_user)
     
-    # URL для дії deactivate
     url = reverse("advertisements-deactivate", kwargs={"pk": test_advertisement.id})
     
     response = api_client.post(url)
